@@ -129,36 +129,35 @@ class ChatCSV:
         embeddings=FastEmbedEmbeddings()
         if index:
             print("loading indexes")
-            vector_store = FAISS.load_local("./data",  embeddings)
-            print("index loaded")
+            if exists('./data/index.faiss'):
+                vector_store = FAISS.load_local("./data",  embeddings)
+                print("index loaded")
+            else:
+                return "Index does not exist"
         else:
             if type == "web":
-                #loader = WebBaseLoader(['https://grocycle.com/about-us/', 'https://grocycle.com/mushroom-cultivation-courses/', 'https://grocycle.com/blog/', 'https://grocycle.com/mushroom-growing-hub/', 'https://grocycle.com/mushroom-education/', 'https://grocycle.com/microgreens-hub/', 'https://grocycle.com/permaculture/', 'https://grocycle.com/homesteading/', 'https://grocycle.com/grocycle-youtube/', 'https://grocycle.com/farmtour/', 'https://grocycle.com/subscribe/', 'https://grocycle.com/workshop/', 'https://grocycle.com/about-us/', 'https://grocycle.com/mushroom-cultivation-courses/', 'https://grocycle.com/blog/', 'https://grocycle.com/mushroom-growing-hub/', 'https://grocycle.com/mushroom-education/', 'https://grocycle.com/microgreens-hub/', 'https://grocycle.com/permaculture/', 'https://grocycle.com/homesteading/', 'https://grocycle.com/grocycle-youtube/', 'https://grocycle.com/farmtour/', 'https://grocycle.com/subscribe/', 'https://grocycle.com/workshop/', 'https://grocycle.com/mushroom-cultivation-courses/', 'https://grocycle.com/mushroom-growing-bags/', 'https://grocycle.com/mushroom-growing-bags/', 'https://grocycle.com/how-to-make-grain-spawn/', 'https://grocycle.com/how-to-make-grain-spawn/', 'https://grocycle.com/how-to-make-liquid-culture/', 'https://grocycle.com/how-to-make-liquid-culture/', 'https://grocycle.com/pf-tek/', 'https://grocycle.com/pf-tek/', 'https://grocycle.com/how-to-grow-morel-mushrooms/', 'https://grocycle.com/how-to-grow-morel-mushrooms/', 'https://grocycle.com/mushroom-inoculation/', 'https://grocycle.com/mushroom-inoculation/', 'https://grocycle.com/how-much-can-you-sell-mushrooms-for/', 'https://grocycle.com/how-much-can-you-sell-mushrooms-for/', 'https://grocycle.com/do-mushrooms-need-light/', 'https://grocycle.com/do-mushrooms-need-light/', 'https://grocycle.com/is-mushroom-growing-sustainable/', 'https://grocycle.com/is-mushroom-growing-sustainable/', 'https://grocycle.com/growing-mushrooms-in-bottles/', 'https://grocycle.com/growing-mushrooms-in-bottles/', 'https://grocycle.com/mushroom-growing-terminology/', 'https://grocycle.com/mushroom-growing-terminology/', 'https://grocycle.com/common-mistakes-mushroom-growers-make/', 'https://grocycle.com/common-mistakes-mushroom-growers-make/', 'https://grocycle.com/how-to-pasteurize-mushroom-substrate/', 'https://grocycle.com/how-to-pasteurize-mushroom-substrate/', 'https://grocycle.com/how-to-sterilize-mushroom-substrate/', 'https://grocycle.com/how-to-sterilize-mushroom-substrate/', 'https://grocycle.com/cold-water-lime-bath-pasteurization-for-mushroom-substrate/', 'https://grocycle.com/cold-water-lime-bath-pasteurization-for-mushroom-substrate/', 'https://grocycle.com/harvest-mushrooms/', 'https://grocycle.com/harvest-mushrooms/', 'https://grocycle.com/mushroom-grow-kits/', 'https://grocycle.com/mushroom-grow-kits/', 'https://grocycle.com/what-conditions-are-needed-for-a-mushroom-to-grow/', 'https://grocycle.com/what-conditions-are-needed-for-a-mushroom-to-grow/', 'https://grocycle.com/mushroom-pinning/', 'https://grocycle.com/mushroom-pinning/', 'https://grocycle.com/grow-mushrooms-indoors/', 'https://grocycle.com/grow-mushrooms-indoors/', 'https://grocycle.com/monotub-fruiting-chamber/', 'https://grocycle.com/monotub-fruiting-chamber/', 'https://grocycle.com/how-to-make-a-mushroom-spore-print/', 'https://grocycle.com/how-to-make-a-mushroom-spore-print/', 'https://grocycle.com/shotgun-fruiting-chamber/', 'https://grocycle.com/shotgun-fruiting-chamber/', 'https://grocycle.com/mushroom-grow-tent/', 'https://grocycle.com/mushroom-grow-tent/', 'https://grocycle.com/coco-coir-substrate/', 'https://grocycle.com/coco-coir-substrate/', 'https://grocycle.com/how-to-build-a-martha-grow-tent/', 'https://grocycle.com/how-to-build-a-martha-grow-tent/', 'https://grocycle.com/what-is-masters-mix/', 'https://grocycle.com/what-is-masters-mix/', 'https://grocycle.com/best-mushroom-growing-books/', 'https://grocycle.com/best-mushroom-growing-books/', 'https://grocycle.com/how-to-clone-mushrooms/', 'https://grocycle.com/how-to-clone-mushrooms/', 'https://grocycle.com/how-to-grow-mushrooms-on-straw/', 'https://grocycle.com/how-to-grow-mushrooms-on-straw/', 'https://grocycle.com/growing-mushrooms-on-sawdust-blocks/', 'https://grocycle.com/growing-mushrooms-on-sawdust-blocks/', 'https://grocycle.com/growing-mushrooms-on-a-book/', 'https://grocycle.com/growing-mushrooms-on-a-book/', 'https://grocycle.com/how-to-sell-mushrooms-to-restaurants/', 'https://grocycle.com/how-to-sell-mushrooms-to-restaurants/', 'https://grocycle.com/mushroom-growing-supplies-list/', 'https://grocycle.com/mushroom-growing-supplies-list/', 'https://grocycle.com/how-long-does-it-take-to-grow-mushrooms/', 'https://grocycle.com/how-long-does-it-take-to-grow-mushrooms/', 'https://grocycle.com/grow-reishi-mushrooms/', 'https://grocycle.com/grow-reishi-mushrooms/', 'https://grocycle.com/growing-mushrooms-in-buckets/', 'https://grocycle.com/growing-mushrooms-in-buckets/', 'https://grocycle.com/mushroom-growing-business-plan/', 'https://grocycle.com/mushroom-growing-business-plan/', 'https://grocycle.com/grow-mushrooms-on-cardboard/', 'https://grocycle.com/grow-mushrooms-on-cardboard/', 'https://grocycle.com/grow-mushrooms-in-a-bag/', 'https://grocycle.com/grow-mushrooms-in-a-bag/', 'https://grocycle.com/easiest-mushrooms-to-grow/', 'https://grocycle.com/easiest-mushrooms-to-grow/', 'https://grocycle.com/growing-lions-mane/', 'https://grocycle.com/growing-lions-mane/', 'https://grocycle.com/mushroom-substrate/', 'https://grocycle.com/mushroom-substrate/', 'https://grocycle.com/how-to-build-a-mushroom-fruiting-chamber/', 'https://grocycle.com/how-to-build-a-mushroom-fruiting-chamber/', 'https://grocycle.com/how-to-grow-mushrooms-outdoors/', 'https://grocycle.com/how-to-grow-mushrooms-outdoors/', 'https://grocycle.com/diy-mushroom-spawn/', 'https://grocycle.com/diy-mushroom-spawn/', 'https://grocycle.com/how-to-grow-mushrooms/', 'https://grocycle.com/how-to-grow-mushrooms/', 'https://grocycle.com/how-to-grow-shiitake-mushrooms/', 'https://grocycle.com/how-to-grow-shiitake-mushrooms/', 'https://grocycle.com/how-to-grow-mushrooms-on-logs-the-ultimate-guide/', 'https://grocycle.com/how-to-grow-mushrooms-on-logs-the-ultimate-guide/', 'https://grocycle.com/growing-mushrooms-in-coffee-grounds/', 'https://grocycle.com/growing-mushrooms-in-coffee-grounds/', 'https://grocycle.com/how-to-grow-oyster-mushrooms/', 'https://grocycle.com/how-to-grow-oyster-mushrooms/', 'https://grocycle.com/5-things-i-wish-i-knew-before-i-started-growing-mushrooms-for-a-living/', 'https://grocycle.com/5-things-i-wish-i-knew-before-i-started-growing-mushrooms-for-a-living/', 'https://grocycle.com/how-to-set-up-a-low-tech-mushroom-farm/', 'https://grocycle.com/how-to-set-up-a-low-tech-mushroom-farm/', 'https://grocycle.com/how-to-grow-mushrooms/', 'https://grocycle.com/how-to-grow-mushrooms/', 'https://grocycle.com/how-to-grow-mushrooms/', 'https://grocycle.com/how-to-grow-mushrooms-on-logs-the-ultimate-guide/', 'https://grocycle.com/how-to-grow-mushrooms-on-logs-the-ultimate-guide/', 'https://grocycle.com/how-to-grow-mushrooms-on-logs-the-ultimate-guide/', 'https://grocycle.com/how-to-set-up-a-low-tech-mushroom-farm/', 'https://grocycle.com/how-to-set-up-a-low-tech-mushroom-farm/', 'https://grocycle.com/how-to-set-up-a-low-tech-mushroom-farm/', 'https://grocycle.com/most-profitable-crops-to-grow/', 'https://grocycle.com/most-profitable-crops-to-grow/', 'https://grocycle.com/most-profitable-crops-to-grow/'])
-                # loader = WebBaseLoader(['https://ezmushroom.com/how-to-grow-mushrooms-at-home/', 'https://ezmushroom.com/recommended-equipment/', 'https://ezmushroom.com/knowledge/', 'https://ezmushroom.com/shop/', 'https://ezmushroom.com/', 'https://ezmushroom.com/', 'https://ezmushroom.com/cart/', 'https://ezmushroom.com/', 'https://ezmushroom.com/how-to-grow-mushrooms-at-home/', 'https://ezmushroom.com/recommended-equipment/', 'https://ezmushroom.com/knowledge/', 'https://ezmushroom.com/shop/', 'https://ezmushroom.com/knowledge/what-does-mycelium-look-like/', 'https://ezmushroom.com/knowledge/what-does-mycelium-look-like/', 'https://ezmushroom.com/author/mrmush/', 'https://ezmushroom.com/knowledge/white-fuzz-on-mushrooms-safe-to-eat-growing-advice/', 'https://ezmushroom.com/knowledge/white-fuzz-on-mushrooms-safe-to-eat-growing-advice/', 'https://ezmushroom.com/author/mrmush/', 'https://ezmushroom.com/knowledge/puffball-mushrooms-guide/', 'https://ezmushroom.com/knowledge/puffball-mushrooms-guide/', 'https://ezmushroom.com/author/mrmush/', 'https://ezmushroom.com/knowledge/liquid-culture-vs-spore-syringe/', 'https://ezmushroom.com/knowledge/liquid-culture-vs-spore-syringe/', 'https://ezmushroom.com/author/mrmush/', 'https://ezmushroom.com/knowledge/reishi-mushroom-growing-profile/', 'https://ezmushroom.com/knowledge/reishi-mushroom-growing-profile/', 'https://ezmushroom.com/author/mrmush/', 'https://ezmushroom.com/knowledge/lions-mane-mushroom-growing-profile/', 'https://ezmushroom.com/knowledge/lions-mane-mushroom-growing-profile/', 'https://ezmushroom.com/author/mrmush/', 'https://ezmushroom.com/knowledge/king-oyster-mushroom-growing-profile/', 'https://ezmushroom.com/knowledge/king-oyster-mushroom-growing-profile/', 'https://ezmushroom.com/author/mrmush/', 'https://ezmushroom.com/knowledge/blue-oyster-mushroom-growing-profile/', 'https://ezmushroom.com/knowledge/blue-oyster-mushroom-growing-profile/', 'https://ezmushroom.com/author/mrmush/', 'https://ezmushroom.com/knowledge/5-easiest-mushrooms-to-grow-indoors/', 'https://ezmushroom.com/knowledge/5-easiest-mushrooms-to-grow-indoors/', 'https://ezmushroom.com/author/mrmush/', 'https://ezmushroom.com/knowledge/do-turkey-tail-mushrooms-grow-in-the-uk/', 'https://ezmushroom.com/knowledge/do-turkey-tail-mushrooms-grow-in-the-uk/', 'https://ezmushroom.com/author/mrmush/', 'https://ezmushroom.com/knowledge/does-growing-mushrooms-indoor-smell/', 'https://ezmushroom.com/knowledge/does-growing-mushrooms-indoor-smell/', 'https://ezmushroom.com/author/mrmush/', 'https://ezmushroom.com/knowledge/does-lions-mane-improve-gaming-performance/', 'https://ezmushroom.com/knowledge/does-lions-mane-improve-gaming-performance/', 'https://ezmushroom.com/author/mrmush/'])
                 loader = WebBaseLoader(ingest_path)
             elif type == "json":
                 loader = JSONLoader(
                     file_path=ingest_path,
-                    # jq_schema=".data[].feedbackText",
-                    jq_schema=".[].summary, .[].service",
-                    # content_key="summary",
-                    # metadata_func=metadata_func
+                    jq_schema=".data[].feedbackText",
+                    # jq_schema=".[].summary, .[].service",
                     )
             # loads the data
             data = loader.load()
             print(data)
             # splits the documents into chunks
-            # text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=100)
-            # all_splits = text_splitter.split_documents(data)
+            text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=100)
+            all_splits = text_splitter.split_documents(data)
             # vector_store = FAISS.from_documents(all_splits, embeddings)
-            # # creates a vector store using embedding
-            # if exists('./data/index.faiss'):
-            #     vector_store_i = FAISS.load_local("./data",  embeddings)
-            #     # vector_store_i = FAISS.from_documents(all_splits, embeddings)
-            #     vector_store.merge_from(vector_store_i)
-            # # else:
-            # #     vector_store = FAISS.from_documents(all_splits, embeddings)
-            # vector_store.save_local("./data")
+            # creates a vector store using embedding
+            if exists('./data/index.faiss'):
+                vector_store_i = FAISS.load_local("./data",  embeddings)
+                # vector_store_i = FAISS.from_documents(all_splits, embeddings)
+                vector_store.merge_from(vector_store_i)
+            else:
+                vector_store = FAISS.from_documents(all_splits, embeddings)
+            vector_store.save_local("./data")
         # sets up the retriever
         self.retriever = vector_store.as_retriever(
             search_type="similarity_score_threshold",
@@ -200,8 +199,9 @@ class ChatCSV:
         If the processing chain is not set up (empty), a message is returned
         prompting to add a CSV document first.
         """
-        # if not self.chain:
-        #     return "Please, add a website first."
+        
+        if not self.chain:
+            return "Please load a json file, web link, or click on Load Index button."
         # load memory for history
         self.memory.load_memory_variables({})
         response = self.chain.invoke(query)
@@ -209,7 +209,6 @@ class ChatCSV:
         query = {"question": query}
         self.memory.save_context(query, {"answer": response["answer"]})
         return response
-        # return self.chain({"question": query, "chat_history": self.chat_history})
 
     def clear(self):
         """

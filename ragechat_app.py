@@ -8,10 +8,15 @@ st.set_page_config(page_title="🤖💬 RAGeChat")
 st.session_state["thinking_spinner"] = st.empty()
 
 def load_index():
-    st.session_state["assistant"].ingest("", True, "")
+    load = st.session_state["assistant"].ingest("", True, "")
+    if load:
+        with st.chat_message("assistant", avatar="./images/ragechatbot.png"):
+            st.write(load)
 
 def clear_index():
     st.session_state["assistant"].clear()
+    with st.chat_message("assistant", avatar="./images/ragechatbot.png"):
+        st.write("Index cleared")
 
 def use_regex(input_text):
     x = re.findall(r"'http[^']*'", str(input_text))
@@ -36,14 +41,16 @@ def process_input():
         # Extract and clean the user input.
         user_text = st.session_state["user_input"].strip()
         agent_text = st.session_state["assistant"].ask(user_text)
-        # print(use_regex(agent_text))
         sources = use_regex(agent_text)
         sources = list(dict.fromkeys(sources))
         source = ""
         for s in sources:
             source += s + "\n\n"
         print(source)
-        return agent_text["answer"] + "\n\nSources:\n\n" + source.replace("'","")
+        if type(agent_text) is dict:
+            return agent_text["answer"] + "\n\nSources:\n\n" + source.replace("'","")
+        else:
+            return agent_text
 
 def read_and_save_url():
     # Clear the state of the question-answering assistant.
@@ -115,18 +122,14 @@ def page():
             label_visibility="collapsed",
             accept_multiple_files=True,
         )
-        # st.sidebar.button("Clear message history", key="clear_history")
-        if st.sidebar.button("Clear message history", key="clear_history"):
+        if st.sidebar.button("Clear chat history", key="clear_history"):
             print("Clearing message history")
             st.session_state["assistant"].memory.clear()
             st.session_state.trace_link = None
             st.session_state.run_id = None
 
-        # st.markdown('📖 Learn how to build this app in this [blog](https://blog.streamlit.io/how-to-build-an-llm-powered-chatbot-with-streamlit/)!')
-
     # Display chat messages
     for message in st.session_state.messages:
-        print(message)
         if message["role"] == "assistant":
             avatar = "./images/ragechatbot.png"
         with st.chat_message(message["role"], avatar=avatar):
