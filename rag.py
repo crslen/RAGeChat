@@ -18,8 +18,7 @@ from langchain.prompts import (
     HumanMessagePromptTemplate,
 )
 from os.path import exists
-import json
-from pathlib import Path
+
 
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
