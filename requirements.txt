@@ -1,3 +1,6 @@
 streamlit>=1.26.0
 jq
 langchain
+pgvector
+psycopg2-binary
+pypdf

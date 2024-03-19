@@ -1,12 +1,12 @@
 from operator import itemgetter
-from langchain_community.vectorstores import FAISS
+
+from langchain_community.vectorstores.pgvector import PGVector
 from langchain_community.chat_models import ChatOllama
+from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.embeddings import FastEmbedEmbeddings
 from langchain.schema.output_parser import StrOutputParser
-# from langchain_community.document_loaders.csv_loader import CSVLoader
-# from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import WebBaseLoader
-from langchain_community.document_loaders import JSONLoader
+from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema.runnable import RunnableLambda, RunnablePassthrough, RunnableParallel
 from langchain.vectorstores.utils import filter_complex_metadata
@@ -17,7 +17,8 @@ from langchain.prompts import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
 )
-from os.path import exists
+from os.path import exists, os
+
 
 
 def format_docs(docs):
@@ -38,6 +39,17 @@ class ChatCSV:
     retriever = None
     memory = None
     chain = None
+    db = None
+    llm = os.environ.get("LLM", "mistral:latest")
+    
+    CONNECTION_STRING = PGVector.connection_string_from_db_params(
+        driver=os.environ.get("PGVECTOR_DRIVER", "psycopg2"),
+        host=os.environ.get("PGVECTOR_HOST", "localhost"),
+        port=int(os.environ.get("PGVECTOR_PORT", "5432")),
+        database=os.environ.get("PGVECTOR_DATABASE", "postgres"),
+        user=os.environ.get("PGVECTOR_USER", "postgres"),
+        password=os.environ.get("PGVECTOR_PASSWORD", "postgres"),
+    )
 
     def __init__(self):
         """
@@ -49,39 +61,14 @@ class ChatCSV:
         - A PromptTemplate for constructing prompts with placeholders for question and context.
         """
         # Initialize the ChatOllama model.
-        # self.model = ChatOllama(model="llama2:7b-chat")
-        self.model = ChatOllama(model="mistral:latest")
+
+        self.model = ChatOllama(model=self.llm)
 
         # Initialize the RecursiveCharacterTextSplitter with specific chunk settings.
-        # self.text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=100)
-
-        # Initialize the PromptTemplate with a predefined template for constructing prompts.
-        # self.prompt = PromptTemplate.from_template(
-        #     """
-        #     <s> [INST] You are an assistant for summarizing feedback. Use the following pieces of retrieved context 
-        #     to answer the question. If you don't know the answer, just say that you don't know. Use three sentences
-        #      maximum and keep the answer concise. [/INST] </s> 
-        #     [INST] Question: {question} 
-        #     Context: {context} 
-        #     Answer: [/INST]
-        #     """
-        # )
         # Your tone should be professional and informative
-
-        # self.prompt = PromptTemplate.from_template(
-        #     """
-        #     <s> [INST]You are a knowledgeable chatbot, here to help with questions of the user. Your tone should be professional and informative. [/INST] </s> 
-        #     [INST] Human Question: {question} 
-        #     Context: {context}
-        #     Previous conversation: {chat_history}
-        #     Answer: [/INST]
-
-        #     """
-        # )
 
         self.prompt = ChatPromptTemplate.from_messages(
             messages=[
-                # SystemMessagePromptTemplate.from_template("You are a knowledgeable chatbot, here to help summarize users response. Your tone should be professional and informative."),
                 SystemMessagePromptTemplate.from_template("You are a knowledgeable chatbot, here to help with questions of the user. Your tone should be professional and informative."),
                 MessagesPlaceholder(variable_name="chat_history"),
                 HumanMessagePromptTemplate.from_template("{question}"),
@@ -91,9 +78,6 @@ class ChatCSV:
 
         self.memory = ConversationBufferMemory(
             memory_key="chat_history", input_key="question", output_key="answer",return_messages=True)
-        # self.prompt.format(product="virtualizaion software")
-        # self.prompt = prompt_template.format_prompt(product="virtualizaion software").to_messages()
-
 
     def ingest(self, ingest_path: str, index: bool, type: str):
         '''
@@ -113,58 +97,48 @@ class ChatCSV:
         - encoding (str): The character encoding of the file (default is 'utf-8').
         - source_column (str): The column in the CSV containing the data (default is "Resume").
         '''        
-        # loader = CSVLoader(
-        #     file_path=csv_file_path,
-        #     # file_path='/home/chris/projects/csv-chatbot-local-llm/data/looper.csv'
-        #     encoding='utf-8',
-        #     source_column="summary"
-        #     )
-        # loader = TextLoader(
-        #     file_path=csv_file_path,
-        #     # file_path='/home/chris/projects/csv-chatbot-local-llm/data/looper.csv'
-        #     encoding='utf-8'
-        #     # source_column="summary"
-        #     )
         embeddings=FastEmbedEmbeddings()
         if index:
             print("loading indexes")
-            if exists('./data/index.faiss'):
-                vector_store = FAISS.load_local("./data",  embeddings)
-                print("index loaded")
-            else:
-                return "Index does not exist"
+            vector_store = PGVector(
+                collection_name="ragechat",
+                connection_string=self.CONNECTION_STRING,
+                embedding_function=embeddings,
+            )
+            self.retriever = vector_store.as_retriever(
+                search_type="similarity_score_threshold",
+                search_kwargs={
+                    "k": 3,
+                    "score_threshold": 0.5,
+                },
+            )
         else:
             if type == "web":
                 loader = WebBaseLoader(ingest_path)
-            elif type == "json":
-                loader = JSONLoader(
+            elif type == "pdf":
+                loader = PyPDFLoader(
                     file_path=ingest_path,
-                    jq_schema=".data[].feedbackText",
-                    # jq_schema=".[].summary, .[].service",
-                    )
+                )
             # loads the data
             data = loader.load()
-            print(data)
             # splits the documents into chunks
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=100)
             all_splits = text_splitter.split_documents(data)
-            # vector_store = FAISS.from_documents(all_splits, embeddings)
-            # creates a vector store using embedding
-            if exists('./data/index.faiss'):
-                vector_store_i = FAISS.load_local("./data",  embeddings)
-                # vector_store_i = FAISS.from_documents(all_splits, embeddings)
-                vector_store.merge_from(vector_store_i)
-            else:
-                vector_store = FAISS.from_documents(all_splits, embeddings)
-            vector_store.save_local("./data")
-        # sets up the retriever
-        self.retriever = vector_store.as_retriever(
-            search_type="similarity_score_threshold",
-            search_kwargs={
-                "k": 3,
-                "score_threshold": 0.5,
-            },
-        )
+            self.db = PGVector.from_documents(
+                embedding=embeddings,
+                documents=all_splits,
+                collection_name="ragechat",
+                connection_string=self.CONNECTION_STRING,
+                pre_delete_collection=False,
+            )
+            # sets up the retriever
+            self.retriever = self.db.as_retriever(
+                search_type="similarity_score_threshold",
+                search_kwargs={
+                    "k": 3,
+                    "score_threshold": 0.5,
+                },
+            )
 
         # Define a processing chain for handling a question-answer scenario.
         # The chain consists of the following components:
@@ -174,7 +148,6 @@ class ChatCSV:
         # 4. Interaction with the "model"
         # 5. Parsing the output using the "StrOutputParser"
 
-        # self.memory.load_memory_variables({})
         rag_chain_from_docs = (
             RunnablePassthrough.assign(
                 context=(lambda x: format_docs(x["context"]))
@@ -199,8 +172,6 @@ class ChatCSV:
         prompting to add a CSV document first.
         """
         
-        if not self.chain:
-            return "Please load a json file, web link, or click on Load Index button."
         # load memory for history
         self.memory.load_memory_variables({})
         response = self.chain.invoke(query)

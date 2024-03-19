@@ -46,7 +46,6 @@ def process_input():
         source = ""
         for s in sources:
             source += s + "\n\n"
-        print(source)
         if type(agent_text) is dict:
             return agent_text["answer"] + "\n\nSources:\n\n" + source.replace("'","")
         else:
@@ -75,10 +74,6 @@ def read_and_save_file():
     # Clear the state of the question-answering assistant.
     st.session_state["assistant"].clear()
 
-    # Clear the chat messages and user input in the session state.
-    st.session_state["messages"] = []
-    st.session_state["user_input"] = ""
-
     # Iterate through the uploaded files in the session state.
     for file in st.session_state["file_uploader"]:
         # Save the file to a temporary location and get the file path.
@@ -88,7 +83,7 @@ def read_and_save_file():
 
         # Display a spinner while ingesting the file.
         #with st.session_state["ingestion_spinner"], st.spinner(f"Ingesting {file.name}"):
-        st.session_state["assistant"].ingest(file_path, False, "json")
+        st.session_state["assistant"].ingest(file_path, False, "pdf")
         os.remove(file_path)
 
 def page():
@@ -101,11 +96,6 @@ def page():
 
     Note: Streamlit (st) functions are used for interacting with the Streamlit app.
     """
-    # Store LLM generated responses
-    if "messages" not in st.session_state.keys():
-        st.session_state["assistant"] = ChatCSV()
-        st.session_state.messages = []
-        st.session_state.messages = [{"role": "assistant", "content": "How may I help you?"}]
 
     with st.sidebar:
         st.title('🤖💬 RAGeChat')
@@ -115,8 +105,8 @@ def page():
         col2.button("Clear Index",key="clear_index", on_click=clear_index)
         st.text_area("Web Link(s)", key="web_input", on_change=read_and_save_url)
         st.file_uploader(
-            "Upload JSON",
-            type=["json"],
+            "Upload PDF",
+            type=["pdf"],
             key="file_uploader",
             on_change=read_and_save_file,
             label_visibility="collapsed",
@@ -127,6 +117,13 @@ def page():
             st.session_state["assistant"].memory.clear()
             st.session_state.trace_link = None
             st.session_state.run_id = None
+
+    # Store LLM generated responses
+    if "messages" not in st.session_state.keys():
+        st.session_state["assistant"] = ChatCSV()
+        load_index()
+        st.session_state.messages = []
+        st.session_state.messages = [{"role": "assistant", "content": "How may I help you?"}]
 
     # Display chat messages
     for message in st.session_state.messages:
